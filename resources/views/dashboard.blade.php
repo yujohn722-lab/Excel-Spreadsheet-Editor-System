@@ -30,7 +30,9 @@
                     </nav>
 
                     <div class="flex items-center gap-2">
-                        <button id="theme-toggle" class="inline-flex h-10 w-10 items-center justify-center rounded-md text-sm font-semibold transition-colors hover:bg-accent" type="button" title="Toggle dark mode">DM</button>
+                        <button id="theme-toggle" class="inline-flex h-10 w-10 items-center justify-center rounded-md text-sm font-semibold transition-colors hover:bg-accent" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">
+                            <span id="theme-icon" class="text-lg leading-none" aria-hidden="true">&#9790;</span>
+                        </button>
                         <a href="#upload" class="traverse-link hidden h-10 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 sm:inline-flex">New Workbook</a>
                     </div>
                 </div>
@@ -195,6 +197,7 @@
                                         <p id="table-summary" class="mt-2 text-sm text-muted-foreground"></p>
                                     </div>
                                     <div class="flex flex-col gap-2 sm:flex-row">
+                                        <button id="open-table-modal" class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-semibold shadow-soft transition-colors hover:bg-accent" type="button">Expand Table</button>
                                         <button id="add-column" class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-semibold shadow-soft transition-colors hover:bg-accent" type="button">Add Column</button>
                                         <button id="add-row" class="inline-flex h-10 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90" type="button">Add Row</button>
                                     </div>
@@ -267,6 +270,43 @@
                     <p class="mt-2 text-white/75">A secure workspace for workbook editing, dashboard review, and updated Excel exports.</p>
                 </div>
             </footer>
+
+            <div id="table-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="table-modal-title">
+                <div class="flex h-[92vh] w-full max-w-[1500px] flex-col overflow-hidden rounded-lg border bg-card shadow-panel">
+                    <div class="flex flex-col gap-4 border-b p-5 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                            <h2 id="table-modal-title" class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Expanded Workbook Table</h2>
+                            <p id="modal-table-summary" class="mt-2 text-sm text-muted-foreground"></p>
+                        </div>
+                        <div class="flex flex-col gap-2 sm:flex-row">
+                            <button id="modal-add-column" class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-semibold shadow-soft transition-colors hover:bg-accent" type="button">Add Column</button>
+                            <button id="modal-add-row" class="inline-flex h-10 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90" type="button">Add Row</button>
+                            <button id="close-table-modal" class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-semibold shadow-soft transition-colors hover:bg-accent" type="button">Close</button>
+                        </div>
+                    </div>
+                    <div class="border-b p-5">
+                        <div class="grid gap-3 lg:grid-cols-[250px_minmax(0,1fr)_auto]">
+                            <div class="space-y-2">
+                                <label for="modal-table-filter-column" class="text-sm font-semibold">Table Column</label>
+                                <select id="modal-table-filter-column" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-soft"></select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="modal-table-filter-value" class="text-sm font-semibold">Contains</label>
+                                <input id="modal-table-filter-value" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="Filter editable rows...">
+                            </div>
+                            <div class="flex items-end">
+                                <button id="modal-clear-table-filter" class="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-semibold shadow-soft transition-colors hover:bg-accent lg:w-auto" type="button">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="min-h-0 flex-1 overflow-auto scrollbar-thin">
+                        <table class="w-full caption-bottom text-sm">
+                            <thead id="modal-table-head" class="sticky top-0 z-10 bg-muted"></thead>
+                            <tbody id="modal-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script>

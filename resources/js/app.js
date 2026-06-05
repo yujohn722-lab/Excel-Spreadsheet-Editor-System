@@ -30,6 +30,7 @@ let revealObserver = null;
 
 const els = {
   themeToggle: document.getElementById('theme-toggle'),
+  themeIcon: document.getElementById('theme-icon'),
   uploadPanel: document.getElementById('upload'),
   uploadButton: document.getElementById('upload-button'),
   excelInput: document.getElementById('excel-input'),
@@ -58,9 +59,20 @@ const els = {
   tableFilterColumn: document.getElementById('table-filter-column'),
   tableFilterValue: document.getElementById('table-filter-value'),
   clearTableFilter: document.getElementById('clear-table-filter'),
+  openTableModal: document.getElementById('open-table-modal'),
+  tableModal: document.getElementById('table-modal'),
+  closeTableModal: document.getElementById('close-table-modal'),
+  modalTableFilterColumn: document.getElementById('modal-table-filter-column'),
+  modalTableFilterValue: document.getElementById('modal-table-filter-value'),
+  modalClearTableFilter: document.getElementById('modal-clear-table-filter'),
+  modalTableSummary: document.getElementById('modal-table-summary'),
+  modalTableHead: document.getElementById('modal-table-head'),
+  modalTableBody: document.getElementById('modal-table-body'),
   tableSummary: document.getElementById('table-summary'),
   tableHead: document.getElementById('table-head'),
   tableBody: document.getElementById('table-body'),
+  modalAddColumn: document.getElementById('modal-add-column'),
+  modalAddRow: document.getElementById('modal-add-row'),
   addColumn: document.getElementById('add-column'),
   addRow: document.getElementById('add-row'),
   syncModeBadge: document.getElementById('sync-mode-badge'),
@@ -78,9 +90,11 @@ function bindEvents() {
     const nextMode = !document.documentElement.classList.contains('dark');
     document.documentElement.classList.toggle('dark', nextMode);
     localStorage.setItem('dashboard-theme', nextMode ? 'dark' : 'light');
+    updateThemeIcon();
   });
 
   document.documentElement.classList.toggle('dark', localStorage.getItem('dashboard-theme') === 'dark');
+  updateThemeIcon();
 
   els.uploadButton?.addEventListener('click', () => els.excelInput?.click());
   els.excelInput?.addEventListener('change', (event) => handleExcelFile(event.target.files?.[0]));
@@ -109,20 +123,8 @@ function bindEvents() {
     render();
   });
 
-  els.tableFilterColumn?.addEventListener('change', (event) => {
-    tableFilter.column = event.target.value;
-    render();
-  });
-
-  els.tableFilterValue?.addEventListener('input', (event) => {
-    tableFilter.query = event.target.value;
-    render();
-  });
-
-  els.clearTableFilter?.addEventListener('click', () => {
-    tableFilter = { column: 'all', query: '' };
-    render();
-  });
+  bindTableFilterControls(els.tableFilterColumn, els.tableFilterValue, els.clearTableFilter);
+  bindTableFilterControls(els.modalTableFilterColumn, els.modalTableFilterValue, els.modalClearTableFilter);
 
   els.chartType?.addEventListener('change', () => {
     workbook.config.chartType = els.chartType.value;
@@ -165,15 +167,22 @@ function bindEvents() {
     render();
   });
 
-  els.addRow?.addEventListener('click', () => {
-    tableFilter = { column: 'all', query: '' };
-    workbook.rows.push(emptyRow(workbook.columns));
-    refreshColumns();
-    setUnsaved('Unsaved changes');
-    render();
-  });
-
+  els.addRow?.addEventListener('click', addRow);
+  els.modalAddRow?.addEventListener('click', addRow);
   els.addColumn?.addEventListener('click', addColumn);
+  els.modalAddColumn?.addEventListener('click', addColumn);
+  els.openTableModal?.addEventListener('click', openTableModal);
+  els.closeTableModal?.addEventListener('click', closeTableModal);
+  els.tableModal?.addEventListener('click', (event) => {
+    if (event.target === els.tableModal) {
+      closeTableModal();
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && els.tableModal && !els.tableModal.classList.contains('hidden')) {
+      closeTableModal();
+    }
+  });
 
   els.saveButton?.addEventListener('click', saveWorkbook);
   els.downloadButton?.addEventListener('click', () => {
@@ -182,6 +191,31 @@ function bindEvents() {
       return;
     }
     window.location.href = `/workbooks/${workbook.id}/download`;
+  });
+}
+
+function updateThemeIcon() {
+  if (!els.themeIcon) {
+    return;
+  }
+
+  els.themeIcon.innerHTML = document.documentElement.classList.contains('dark') ? '&#9728;' : '&#9790;';
+}
+
+function bindTableFilterControls(columnSelect, queryInput, clearButton) {
+  columnSelect?.addEventListener('change', (event) => {
+    tableFilter.column = event.target.value;
+    render();
+  });
+
+  queryInput?.addEventListener('input', (event) => {
+    tableFilter.query = event.target.value;
+    render();
+  });
+
+  clearButton?.addEventListener('click', () => {
+    tableFilter = { column: 'all', query: '' };
+    render();
   });
 }
 
@@ -408,6 +442,7 @@ function render() {
   renderControls();
   renderChart(dashboardRows);
   renderTable(tableRows, dashboardRows.length);
+  renderModalTable(tableRows, dashboardRows.length);
   renderSync();
   renderQualityProfile();
   refreshMotion();
@@ -452,22 +487,29 @@ function updateFilterFromSelect(select) {
 }
 
 function renderTableFilters() {
-  if (!els.tableFilterColumn || !els.tableFilterValue || !els.clearTableFilter) {
-    return;
-  }
-
   const columnExists = tableFilter.column === 'all' || workbook.columns.some((column) => column.name === tableFilter.column);
   if (!columnExists) {
     tableFilter.column = 'all';
   }
 
-  els.tableFilterColumn.innerHTML = [
+  const options = [
     '<option value="all">All columns</option>',
     ...workbook.columns.map((column) => `<option value="${escapeHtml(column.name)}">${escapeHtml(column.name)}</option>`)
   ].join('');
-  els.tableFilterColumn.value = tableFilter.column;
-  els.tableFilterValue.value = tableFilter.query;
-  els.clearTableFilter.disabled = tableFilter.column === 'all' && !tableFilter.query.trim();
+
+  [
+    [els.tableFilterColumn, els.tableFilterValue, els.clearTableFilter],
+    [els.modalTableFilterColumn, els.modalTableFilterValue, els.modalClearTableFilter]
+  ].forEach(([columnSelect, queryInput, clearButton]) => {
+    if (!columnSelect || !queryInput || !clearButton) {
+      return;
+    }
+
+    columnSelect.innerHTML = options;
+    columnSelect.value = tableFilter.column;
+    queryInput.value = tableFilter.query;
+    clearButton.disabled = tableFilter.column === 'all' && !tableFilter.query.trim();
+  });
 }
 
 function renderDatabase(visibleRows) {
@@ -599,29 +641,52 @@ function renderTable(visibleRows, baseRowCount = visibleRows.length) {
   els.tableSummary.textContent = tableFilter.query.trim()
     ? `${visibleRows.length} of ${baseRowCount} rows match the table filter.`
     : `${visibleRows.length} visible rows can be edited directly in the grid.`;
-  els.tableHead.innerHTML = `
+  renderEditableTable(els.tableHead, els.tableBody, visibleRows);
+}
+
+function renderModalTable(visibleRows, baseRowCount = visibleRows.length) {
+  if (!els.modalTableSummary) {
+    return;
+  }
+
+  els.modalTableSummary.textContent = tableFilter.query.trim()
+    ? `${visibleRows.length} of ${baseRowCount} rows match the table filter.`
+    : `${visibleRows.length} visible rows can be edited in expanded view.`;
+  renderEditableTable(els.modalTableHead, els.modalTableBody, visibleRows, { large: true });
+}
+
+function renderEditableTable(head, body, visibleRows, options = {}) {
+  if (!head || !body) {
+    return;
+  }
+
+  const compact = workbook.config.density === 'compact' && !options.large;
+  const headerInputClass = options.large ? 'h-10 min-w-[190px] text-sm' : 'h-9 min-w-[150px] text-xs';
+  const cellInputClass = options.large ? 'h-11 min-w-[190px]' : `${compact ? 'h-8' : 'h-10'} min-w-[150px]`;
+  const rowClass = options.large ? 'h-12' : compact ? 'h-10' : 'h-12';
+
+  head.innerHTML = `
     <tr class="border-b">
       ${workbook.columns.map((column) => `
         <th class="h-11 min-w-[170px] px-3 text-left align-middle">
-          <input class="column-name-input h-9 min-w-[150px] w-full rounded-md border border-transparent bg-transparent px-2 text-xs font-bold text-muted-foreground shadow-none hover:border-input focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <input class="column-name-input ${headerInputClass} w-full rounded-md border border-transparent bg-transparent px-2 font-bold text-muted-foreground shadow-none hover:border-input focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             data-column="${escapeHtml(column.name)}"
             value="${escapeHtml(column.name)}"
             title="Edit column name">
         </th>
       `).join('')}
       <th class="h-11 w-14 px-3"></th>
-          </tr>
+    </tr>
   `;
 
-  const compact = workbook.config.density === 'compact';
-  els.tableBody.innerHTML = visibleRows.length
+  body.innerHTML = visibleRows.length
     ? visibleRows
-        .map((row) => `
-          <tr class="fade-in-row border-b transition-colors hover:bg-muted/50 ${compact ? 'h-10' : 'h-12'}" style="--reveal-delay: ${Math.min(220, visibleRows.indexOf(row) * 24)}ms" data-row-id="${row.__rowId}">
+        .map((row, index) => `
+          <tr class="fade-in-row border-b transition-colors hover:bg-muted/50 ${rowClass}" style="--reveal-delay: ${Math.min(220, index * 24)}ms" data-row-id="${row.__rowId}">
             ${workbook.columns
               .map((column) => `
                 <td class="px-3 ${compact ? 'py-1' : 'py-2'} align-middle">
-                  <input class="cell-input flex ${compact ? 'h-8' : 'h-10'} min-w-[150px] w-full rounded-md border border-transparent bg-transparent px-3 py-2 text-sm shadow-none hover:border-input focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  <input class="cell-input flex ${cellInputClass} w-full rounded-md border border-transparent bg-transparent px-3 py-2 text-sm shadow-none hover:border-input focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     data-column="${escapeHtml(column.name)}"
                     data-type="${column.type}"
                     type="${column.type === 'number' ? 'number' : 'text'}"
@@ -632,12 +697,16 @@ function renderTable(visibleRows, baseRowCount = visibleRows.length) {
             <td class="px-3 py-2 align-middle">
               <button class="delete-row inline-flex h-10 w-10 items-center justify-center rounded-md text-sm font-semibold text-destructive hover:bg-accent" type="button">Del</button>
             </td>
-      </tr>
+          </tr>
         `)
         .join('')
     : `<tr><td colspan="${workbook.columns.length + 1}" class="h-24 text-center text-muted-foreground">No rows match the active filters.</td></tr>`;
 
-  els.tableHead.querySelectorAll('.column-name-input').forEach((input) => {
+  bindEditableTableEvents(head, body);
+}
+
+function bindEditableTableEvents(head, body) {
+  head.querySelectorAll('.column-name-input').forEach((input) => {
     input.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -656,7 +725,7 @@ function renderTable(visibleRows, baseRowCount = visibleRows.length) {
     });
   });
 
-  els.tableBody.querySelectorAll('.cell-input').forEach((input) => {
+  body.querySelectorAll('.cell-input').forEach((input) => {
     input.addEventListener('change', (event) => {
       const rowId = event.target.closest('tr').dataset.rowId;
       const column = event.target.dataset.column;
@@ -672,7 +741,7 @@ function renderTable(visibleRows, baseRowCount = visibleRows.length) {
     });
   });
 
-  els.tableBody.querySelectorAll('.delete-row').forEach((button) => {
+  body.querySelectorAll('.delete-row').forEach((button) => {
     button.addEventListener('click', (event) => {
       const rowId = event.target.closest('tr').dataset.rowId;
       workbook.rows = workbook.rows.filter((row) => row.__rowId !== rowId);
@@ -753,6 +822,36 @@ function addColumn() {
   refreshColumns();
   setUnsaved(`Added column ${name}`);
   render();
+}
+
+function addRow() {
+  tableFilter = { column: 'all', query: '' };
+  workbook.rows.push(emptyRow(workbook.columns));
+  refreshColumns();
+  setUnsaved('Unsaved changes');
+  render();
+}
+
+function openTableModal() {
+  if (!els.tableModal) {
+    return;
+  }
+
+  els.tableModal.classList.remove('hidden');
+  els.tableModal.classList.add('flex');
+  document.body.classList.add('overflow-hidden');
+  render();
+  window.requestAnimationFrame(() => els.modalTableFilterValue?.focus());
+}
+
+function closeTableModal() {
+  if (!els.tableModal) {
+    return;
+  }
+
+  els.tableModal.classList.add('hidden');
+  els.tableModal.classList.remove('flex');
+  document.body.classList.remove('overflow-hidden');
 }
 
 function normalizeColumnName(value) {
