@@ -491,8 +491,8 @@ function renderControls() {
   setOptions(els.dateField, ['none', ...workbook.columns.filter((column) => column.type === 'date').map((column) => column.name)], workbook.config.dateColumn || 'none');
   els.trendMode.checked = Boolean(workbook.config.showTrend);
   els.trendMode.disabled = !workbook.config.dateColumn;
-  els.chartType.disabled = Boolean(workbook.config.showTrend);
-  els.dimensionField.disabled = Boolean(workbook.config.showTrend);
+  els.chartType.disabled = false;
+  els.dimensionField.disabled = false;
   els.densityMode.checked = workbook.config.density === 'compact';
 }
 
