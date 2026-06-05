@@ -188,12 +188,30 @@
                         </section>
 
                         <section id="spreadsheet" class="motion-card reveal-on-scroll rounded-lg border bg-card shadow-panel">
-                            <div class="flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h2 class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Editable Workbook Table</h2>
-                                    <p id="table-summary" class="mt-2 text-sm text-muted-foreground"></p>
+                            <div class="border-b p-5">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h2 class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Editable Workbook Table</h2>
+                                        <p id="table-summary" class="mt-2 text-sm text-muted-foreground"></p>
+                                    </div>
+                                    <div class="flex flex-col gap-2 sm:flex-row">
+                                        <button id="add-column" class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-5 text-sm font-semibold shadow-soft transition-colors hover:bg-accent" type="button">Add Column</button>
+                                        <button id="add-row" class="inline-flex h-10 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90" type="button">Add Row</button>
+                                    </div>
                                 </div>
-                                <button id="add-row" class="inline-flex h-10 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90" type="button">Add Row</button>
+                                <div class="mt-4 grid gap-3 lg:grid-cols-[230px_minmax(0,1fr)_auto]">
+                                    <div class="space-y-2">
+                                        <label for="table-filter-column" class="text-sm font-semibold">Table Column</label>
+                                        <select id="table-filter-column" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-soft"></select>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label for="table-filter-value" class="text-sm font-semibold">Contains</label>
+                                        <input id="table-filter-value" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="Filter editable rows...">
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button id="clear-table-filter" class="inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-semibold shadow-soft transition-colors hover:bg-accent lg:w-auto" type="button">Clear</button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="max-h-[430px] overflow-auto scrollbar-thin">
                                 <table class="w-full caption-bottom text-sm">

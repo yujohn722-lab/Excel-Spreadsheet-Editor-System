@@ -24,6 +24,7 @@ let workbook = payload.initialWorkbook ? fromSavedWorkbook(payload.initialWorkbo
 let pendingExcelFile = null;
 let search = '';
 let filters = {};
+let tableFilter = { column: 'all', query: '' };
 let chart = null;
 let revealObserver = null;
 
@@ -54,9 +55,13 @@ const els = {
   dateField: document.getElementById('date-field'),
   trendMode: document.getElementById('trend-mode'),
   densityMode: document.getElementById('density-mode'),
+  tableFilterColumn: document.getElementById('table-filter-column'),
+  tableFilterValue: document.getElementById('table-filter-value'),
+  clearTableFilter: document.getElementById('clear-table-filter'),
   tableSummary: document.getElementById('table-summary'),
   tableHead: document.getElementById('table-head'),
   tableBody: document.getElementById('table-body'),
+  addColumn: document.getElementById('add-column'),
   addRow: document.getElementById('add-row'),
   syncModeBadge: document.getElementById('sync-mode-badge'),
   syncTiles: document.getElementById('sync-tiles'),
@@ -104,6 +109,21 @@ function bindEvents() {
     render();
   });
 
+  els.tableFilterColumn?.addEventListener('change', (event) => {
+    tableFilter.column = event.target.value;
+    render();
+  });
+
+  els.tableFilterValue?.addEventListener('input', (event) => {
+    tableFilter.query = event.target.value;
+    render();
+  });
+
+  els.clearTableFilter?.addEventListener('click', () => {
+    tableFilter = { column: 'all', query: '' };
+    render();
+  });
+
   els.chartType?.addEventListener('change', () => {
     workbook.config.chartType = els.chartType.value;
     workbook.config.showTrend = false;
@@ -146,11 +166,14 @@ function bindEvents() {
   });
 
   els.addRow?.addEventListener('click', () => {
+    tableFilter = { column: 'all', query: '' };
     workbook.rows.push(emptyRow(workbook.columns));
     refreshColumns();
     setUnsaved('Unsaved changes');
     render();
   });
+
+  els.addColumn?.addEventListener('click', addColumn);
 
   els.saveButton?.addEventListener('click', saveWorkbook);
   els.downloadButton?.addEventListener('click', () => {
@@ -277,6 +300,7 @@ async function handleExcelFile(file) {
     pendingExcelFile = file;
     search = '';
     filters = {};
+    tableFilter = { column: 'all', query: '' };
     els.searchInput.value = '';
     setStatus('Workbook loaded; save to update stored Excel');
     render();
@@ -374,14 +398,16 @@ function buildSavePayload() {
 
 function render() {
   refreshColumns();
-  const visibleRows = filterRows(workbook.rows, search, filters);
+  const dashboardRows = filterRows(workbook.rows, search, filters);
+  const tableRows = filterTableRows(dashboardRows, tableFilter);
 
   renderFilters();
-  renderDatabase(visibleRows);
-  renderKpis(visibleRows);
+  renderTableFilters();
+  renderDatabase(dashboardRows);
+  renderKpis(dashboardRows);
   renderControls();
-  renderChart(visibleRows);
-  renderTable(visibleRows);
+  renderChart(dashboardRows);
+  renderTable(tableRows, dashboardRows.length);
   renderSync();
   renderQualityProfile();
   refreshMotion();
@@ -423,6 +449,25 @@ function updateFilterFromSelect(select) {
   }
   filters[column] = select.value;
   render();
+}
+
+function renderTableFilters() {
+  if (!els.tableFilterColumn || !els.tableFilterValue || !els.clearTableFilter) {
+    return;
+  }
+
+  const columnExists = tableFilter.column === 'all' || workbook.columns.some((column) => column.name === tableFilter.column);
+  if (!columnExists) {
+    tableFilter.column = 'all';
+  }
+
+  els.tableFilterColumn.innerHTML = [
+    '<option value="all">All columns</option>',
+    ...workbook.columns.map((column) => `<option value="${escapeHtml(column.name)}">${escapeHtml(column.name)}</option>`)
+  ].join('');
+  els.tableFilterColumn.value = tableFilter.column;
+  els.tableFilterValue.value = tableFilter.query;
+  els.clearTableFilter.disabled = tableFilter.column === 'all' && !tableFilter.query.trim();
 }
 
 function renderDatabase(visibleRows) {
@@ -550,8 +595,10 @@ function renderChart(visibleRows) {
   els.chartCanvas.classList.add('chart-pulse');
 }
 
-function renderTable(visibleRows) {
-  els.tableSummary.textContent = `${visibleRows.length} visible rows can be edited directly in the grid.`;
+function renderTable(visibleRows, baseRowCount = visibleRows.length) {
+  els.tableSummary.textContent = tableFilter.query.trim()
+    ? `${visibleRows.length} of ${baseRowCount} rows match the table filter.`
+    : `${visibleRows.length} visible rows can be edited directly in the grid.`;
   els.tableHead.innerHTML = `
     <tr class="border-b">
       ${workbook.columns.map((column) => `
@@ -681,8 +728,30 @@ function renameColumn(oldName, rawName) {
     delete filters[oldName];
   }
 
+  if (tableFilter.column === oldName) {
+    tableFilter.column = nextName;
+  }
+
   refreshColumns();
   setUnsaved(`Renamed column to ${nextName}`);
+  render();
+}
+
+function addColumn() {
+  const name = uniqueColumnName('New Column', null);
+
+  if (!workbook.rows.length) {
+    workbook.rows.push({ __rowId: createRowId(), [name]: '' });
+  } else {
+    workbook.rows = workbook.rows.map((row) => ({
+      ...row,
+      [name]: ''
+    }));
+  }
+
+  tableFilter = { column: 'all', query: '' };
+  refreshColumns();
+  setUnsaved(`Added column ${name}`);
   render();
 }
 
@@ -858,6 +927,21 @@ function filterRows(rows, query, activeFilters) {
     const matchesFilters = Object.entries(activeFilters).every(([key, value]) => !value || value === 'all' || String(row[key] ?? '') === value);
     return matchesSearch && matchesFilters;
   });
+}
+
+function filterTableRows(rows, activeTableFilter) {
+  const normalized = activeTableFilter.query.trim().toLowerCase();
+
+  if (!normalized) {
+    return rows;
+  }
+
+  if (activeTableFilter.column && activeTableFilter.column !== 'all') {
+    return rows.filter((row) => String(row[activeTableFilter.column] ?? '').toLowerCase().includes(normalized));
+  }
+
+  return rows.filter((row) => Object.entries(row)
+    .some(([key, value]) => key !== '__rowId' && String(value ?? '').toLowerCase().includes(normalized)));
 }
 
 function generateKpis(rows, columns, metric) {
