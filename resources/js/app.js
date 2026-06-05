@@ -106,11 +106,13 @@ function bindEvents() {
 
   els.chartType?.addEventListener('change', () => {
     workbook.config.chartType = els.chartType.value;
+    workbook.config.showTrend = false;
     setUnsaved('Unsaved dashboard settings');
     render();
   });
   els.dimensionField?.addEventListener('change', () => {
     workbook.config.dimension = els.dimensionField.value;
+    workbook.config.showTrend = false;
     setUnsaved('Unsaved dashboard settings');
     render();
   });
@@ -121,10 +123,18 @@ function bindEvents() {
   });
   els.dateField?.addEventListener('change', () => {
     workbook.config.dateColumn = els.dateField.value === 'none' ? null : els.dateField.value;
+    workbook.config.showTrend = Boolean(workbook.config.dateColumn && workbook.config.showTrend);
     setUnsaved('Unsaved dashboard settings');
     render();
   });
   els.trendMode?.addEventListener('change', () => {
+    if (els.trendMode.checked && !workbook.config.dateColumn) {
+      workbook.config.showTrend = false;
+      setStatus('Choose a date field before enabling trend mode');
+      render();
+      return;
+    }
+
     workbook.config.showTrend = els.trendMode.checked;
     setUnsaved('Unsaved dashboard settings');
     render();
@@ -480,6 +490,9 @@ function renderControls() {
   setOptions(els.metricField, numericColumns(workbook.columns).map((column) => column.name), workbook.config.metric);
   setOptions(els.dateField, ['none', ...workbook.columns.filter((column) => column.type === 'date').map((column) => column.name)], workbook.config.dateColumn || 'none');
   els.trendMode.checked = Boolean(workbook.config.showTrend);
+  els.trendMode.disabled = !workbook.config.dateColumn;
+  els.chartType.disabled = Boolean(workbook.config.showTrend);
+  els.dimensionField.disabled = Boolean(workbook.config.showTrend);
   els.densityMode.checked = workbook.config.density === 'compact';
 }
 
@@ -491,7 +504,9 @@ function renderChart(visibleRows) {
   const chartType = useTrend ? 'line' : workbook.config.chartType === 'pie' ? 'doughnut' : workbook.config.chartType || 'bar';
 
   els.chartTitle.textContent = workbook.config.title || 'Dashboard Overview';
-  els.chartSubtitle.textContent = `${workbook.config.metric || 'Metric'} by ${workbook.config.dimension || 'record'} from ${visibleRows.length} visible rows`;
+  els.chartSubtitle.textContent = useTrend
+    ? `${workbook.config.metric || 'Metric'} trend by ${workbook.config.dateColumn || 'date'} from ${visibleRows.length} visible rows`
+    : `${workbook.config.metric || 'Metric'} by ${workbook.config.dimension || 'record'} from ${visibleRows.length} visible rows`;
 
   if (chart) {
     chart.destroy();
@@ -693,7 +708,7 @@ function reconcileConfig(config, rows, columns) {
     metric: hasMetric ? config.metric : fallback.metric,
     dimension: hasDimension ? config.dimension : fallback.dimension,
     dateColumn: hasDateColumn ? config.dateColumn : fallback.dateColumn,
-    showTrend: hasDateColumn ? config.showTrend : Boolean(fallback.dateColumn)
+    showTrend: hasDateColumn ? Boolean(config.showTrend) : false
   };
 }
 
@@ -715,7 +730,7 @@ function createDashboardConfig(rows, columns = inferColumns(rows)) {
   const metric = columns.find((column) => column.type === 'number')?.name;
   const dimension = columns.find((column) => column.type === 'text' && column.distinct > 1 && column.distinct <= Math.max(12, rows.length))?.name || columns.find((column) => column.type === 'text')?.name;
   const dateColumn = columns.find((column) => column.type === 'date')?.name;
-  return { title: 'Dashboard Overview', chartType: 'bar', metric, dimension, dateColumn, density: 'comfortable', showTrend: Boolean(dateColumn) };
+  return { title: 'Dashboard Overview', chartType: 'bar', metric, dimension, dateColumn, density: 'comfortable', showTrend: false };
 }
 
 function publicColumnNames(rows) {
