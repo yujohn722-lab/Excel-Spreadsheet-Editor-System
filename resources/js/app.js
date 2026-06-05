@@ -554,9 +554,16 @@ function renderTable(visibleRows) {
   els.tableSummary.textContent = `${visibleRows.length} visible rows can be edited directly in the grid.`;
   els.tableHead.innerHTML = `
     <tr class="border-b">
-      ${workbook.columns.map((column) => `<th class="h-11 min-w-[170px] px-3 text-left align-middle text-xs font-bold uppercase text-muted-foreground">${escapeHtml(column.name)}</th>`).join('')}
+      ${workbook.columns.map((column) => `
+        <th class="h-11 min-w-[170px] px-3 text-left align-middle">
+          <input class="column-name-input h-9 min-w-[150px] w-full rounded-md border border-transparent bg-transparent px-2 text-xs font-bold text-muted-foreground shadow-none hover:border-input focus-visible:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-column="${escapeHtml(column.name)}"
+            value="${escapeHtml(column.name)}"
+            title="Edit column name">
+        </th>
+      `).join('')}
       <th class="h-11 w-14 px-3"></th>
-    </tr>
+          </tr>
   `;
 
   const compact = workbook.config.density === 'compact';
@@ -578,10 +585,29 @@ function renderTable(visibleRows) {
             <td class="px-3 py-2 align-middle">
               <button class="delete-row inline-flex h-10 w-10 items-center justify-center rounded-md text-sm font-semibold text-destructive hover:bg-accent" type="button">Del</button>
             </td>
-          </tr>
+      </tr>
         `)
         .join('')
     : `<tr><td colspan="${workbook.columns.length + 1}" class="h-24 text-center text-muted-foreground">No rows match the active filters.</td></tr>`;
+
+  els.tableHead.querySelectorAll('.column-name-input').forEach((input) => {
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        event.target.blur();
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.target.value = event.target.dataset.column;
+        event.target.blur();
+      }
+    });
+
+    input.addEventListener('change', (event) => {
+      renameColumn(event.target.dataset.column, event.target.value);
+    });
+  });
 
   els.tableBody.querySelectorAll('.cell-input').forEach((input) => {
     input.addEventListener('change', (event) => {
@@ -608,6 +634,84 @@ function renderTable(visibleRows) {
       render();
     });
   });
+}
+
+function renameColumn(oldName, rawName) {
+  const nextName = uniqueColumnName(normalizeColumnName(rawName), oldName);
+
+  if (!nextName) {
+    setStatus('Column name cannot be blank');
+    render();
+    return;
+  }
+
+  if (nextName === oldName) {
+    render();
+    return;
+  }
+
+  const knownColumns = new Set(workbook.columns.map((column) => column.name));
+
+  workbook.rows = workbook.rows.map((row) => {
+    const nextRow = { __rowId: row.__rowId || createRowId() };
+
+    workbook.columns.forEach((column) => {
+      const sourceName = column.name;
+      const targetName = sourceName === oldName ? nextName : sourceName;
+      nextRow[targetName] = row[sourceName] ?? '';
+    });
+
+    Object.entries(row).forEach(([key, value]) => {
+      if (key !== '__rowId' && !knownColumns.has(key)) {
+        nextRow[key] = value;
+      }
+    });
+
+    return nextRow;
+  });
+
+  ['metric', 'dimension', 'dateColumn'].forEach((key) => {
+    if (workbook.config[key] === oldName) {
+      workbook.config[key] = nextName;
+    }
+  });
+
+  if (Object.prototype.hasOwnProperty.call(filters, oldName)) {
+    filters[nextName] = filters[oldName];
+    delete filters[oldName];
+  }
+
+  refreshColumns();
+  setUnsaved(`Renamed column to ${nextName}`);
+  render();
+}
+
+function normalizeColumnName(value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ');
+}
+
+function uniqueColumnName(name, oldName) {
+  if (!name) {
+    return '';
+  }
+
+  const taken = new Set(workbook.columns
+    .map((column) => column.name)
+    .filter((columnName) => columnName !== oldName));
+
+  if (!taken.has(name)) {
+    return name;
+  }
+
+  let suffix = 2;
+  let candidate = `${name} ${suffix}`;
+
+  while (taken.has(candidate)) {
+    suffix += 1;
+    candidate = `${name} ${suffix}`;
+  }
+
+  return candidate;
 }
 
 function renderSync() {
