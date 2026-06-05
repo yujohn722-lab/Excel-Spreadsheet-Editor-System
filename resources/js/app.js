@@ -4,7 +4,8 @@ import * as XLSX from 'xlsx';
 
 const payload = window.dashboardPayload || {};
 const csrfToken = payload.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
-const localDraftKey = 'blade-excel-dashboard-builder:draft';
+const localDraftKey = 'excel-dashboard-builder:draft';
+const legacyDraftKey = 'blade-excel-dashboard-builder:draft';
 
 const sampleRows = [
   { __rowId: 'sample-1', Program: 'Institutional Strategic Management', Office: 'QASMO', Cycle: 'S.Y. 2024-2025', Status: 'Completed', Budget: 285000, Participants: 96, Completion: 100, 'Quality Score': 94, Date: '2025-03-18' },
@@ -19,11 +20,12 @@ const sampleRows = [
 
 const colors = ['#2367f3', '#06c76f', '#ffdc5e', '#9bc7e4', '#5d6bf5', '#003c8f', '#84cc16', '#38bdf8'];
 
-let workbook = payload.initialWorkbook ? fromLaravelWorkbook(payload.initialWorkbook) : createSampleWorkbook();
+let workbook = payload.initialWorkbook ? fromSavedWorkbook(payload.initialWorkbook) : createSampleWorkbook();
 let pendingExcelFile = null;
 let search = '';
 let filters = {};
 let chart = null;
+let revealObserver = null;
 
 const els = {
   themeToggle: document.getElementById('theme-toggle'),
@@ -63,6 +65,7 @@ const els = {
 
 hydrateDraft();
 bindEvents();
+initializeMotion();
 render();
 
 function bindEvents() {
@@ -149,6 +152,100 @@ function bindEvents() {
   });
 }
 
+function initializeMotion() {
+  bindTraversalLinks();
+  setupRevealObserver();
+  updateScrollProgress();
+  updateActiveTraversal();
+
+  window.addEventListener('scroll', () => {
+    updateScrollProgress();
+    updateActiveTraversal();
+  }, { passive: true });
+
+  window.addEventListener('resize', updateScrollProgress);
+}
+
+function bindTraversalLinks() {
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.classList.add('traverse-link');
+
+    link.addEventListener('click', (event) => {
+      const hash = link.getAttribute('href');
+      const target = hash ? document.getElementById(hash.slice(1)) : null;
+
+      if (!target) {
+        return;
+      }
+
+      event.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.classList.remove('nav-traversing');
+      void target.offsetWidth;
+      target.classList.add('nav-traversing');
+      window.history.pushState(null, '', hash);
+      setActiveTraversal(hash);
+
+      window.setTimeout(() => target.classList.remove('nav-traversing'), 520);
+    });
+  });
+}
+
+function setupRevealObserver() {
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.reveal-on-scroll').forEach((element) => element.classList.add('is-visible'));
+    return;
+  }
+
+  revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) {
+        return;
+      }
+
+      entry.target.classList.add('is-visible');
+      revealObserver?.unobserve(entry.target);
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.12 });
+}
+
+function refreshMotion() {
+  window.requestAnimationFrame(() => {
+    document.querySelectorAll('.reveal-on-scroll:not([data-reveal-ready])').forEach((element) => {
+      element.dataset.revealReady = 'true';
+      revealObserver ? revealObserver.observe(element) : element.classList.add('is-visible');
+    });
+  });
+}
+
+function updateScrollProgress() {
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = maxScroll > 0 ? Math.min(100, Math.max(0, (window.scrollY / maxScroll) * 100)) : 0;
+  document.documentElement.style.setProperty('--scroll-progress', `${progress}%`);
+}
+
+function updateActiveTraversal() {
+  const targetIds = [...new Set([...document.querySelectorAll('a[href^="#"]')]
+    .map((link) => link.getAttribute('href')?.slice(1))
+    .filter(Boolean))];
+  const targets = targetIds
+    .map((id) => document.getElementById(id))
+    .filter((element) => element && element.offsetParent !== null);
+  const active = targets
+    .filter((element) => element.getBoundingClientRect().top <= 128)
+    .pop();
+
+  if (active) {
+    setActiveTraversal(`#${active.id}`);
+  }
+}
+
+function setActiveTraversal(hash) {
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.classList.toggle('is-active', link.getAttribute('href') === hash);
+  });
+}
+
 async function handleExcelFile(file) {
   hideUploadError();
   if (!file) {
@@ -230,13 +327,13 @@ async function saveWorkbook() {
     }
 
     const result = await response.json();
-    workbook = fromLaravelWorkbook(result.workbook);
+    workbook = fromSavedWorkbook(result.workbook);
     pendingExcelFile = null;
     localStorage.setItem(localDraftKey, JSON.stringify(workbook));
-    setStatus('Saved to MySQL and updated Excel file');
+    setStatus('Saved and updated Excel file');
     render();
   } catch (error) {
-    setStatus('Local draft saved; database not connected');
+    setStatus('Local draft saved; storage is not connected');
   }
 }
 
@@ -277,6 +374,9 @@ function render() {
   renderTable(visibleRows);
   renderSync();
   renderQualityProfile();
+  refreshMotion();
+  updateScrollProgress();
+  updateActiveTraversal();
 }
 
 function renderFilters() {
@@ -339,7 +439,7 @@ function renderDatabase(visibleRows) {
       ${summaries
         .slice(0, 3)
         .map((summary) => `
-          <div class="rounded-md bg-muted/55 px-3 py-2 text-xs">
+          <div class="motion-card rounded-md bg-muted/55 px-3 py-2 text-xs">
             <p class="truncate font-bold">${escapeHtml(summary.name)}</p>
             <p class="truncate text-muted-foreground">${escapeHtml(summary.original_filename || summary.sheet_name)}</p>
           </div>
@@ -361,7 +461,7 @@ function renderKpis(visibleRows) {
 
   els.kpiGrid.innerHTML = kpis
     .map((kpi) => `
-      <div class="rounded-lg border bg-card p-4 shadow-panel">
+      <div class="motion-card reveal-on-scroll rounded-lg border bg-card p-4 shadow-panel">
         <div class="flex items-center gap-4">
           <div class="flex shrink-0 items-center justify-center rounded-full text-center font-extrabold shadow-soft ${sizeClass} ${toneClass[kpi.tone]}">${escapeHtml(kpi.value)}</div>
           <div class="min-w-0">
@@ -429,6 +529,10 @@ function renderChart(visibleRows) {
       }
     }
   });
+
+  els.chartCanvas.classList.remove('chart-pulse');
+  void els.chartCanvas.offsetWidth;
+  els.chartCanvas.classList.add('chart-pulse');
 }
 
 function renderTable(visibleRows) {
@@ -444,7 +548,7 @@ function renderTable(visibleRows) {
   els.tableBody.innerHTML = visibleRows.length
     ? visibleRows
         .map((row) => `
-          <tr class="border-b transition-colors hover:bg-muted/50 ${compact ? 'h-10' : 'h-12'}" data-row-id="${row.__rowId}">
+          <tr class="fade-in-row border-b transition-colors hover:bg-muted/50 ${compact ? 'h-10' : 'h-12'}" style="--reveal-delay: ${Math.min(220, visibleRows.indexOf(row) * 24)}ms" data-row-id="${row.__rowId}">
             ${workbook.columns
               .map((column) => `
                 <td class="px-3 ${compact ? 'py-1' : 'py-2'} align-middle">
@@ -504,7 +608,7 @@ function renderQualityProfile() {
   els.qualityProfile.innerHTML = workbook.columns
     .slice(0, 6)
     .map((column) => `
-      <div class="rounded-md border bg-muted/35 p-4">
+      <div class="motion-card reveal-on-scroll rounded-md border bg-muted/35 p-4">
         <p class="truncate text-sm font-bold text-foreground">${escapeHtml(column.name)}</p>
         <p class="mt-2 text-xs font-semibold uppercase text-muted-foreground">${escapeHtml(column.type)}</p>
         <p class="mt-3 text-sm text-muted-foreground">${column.distinct} distinct, ${column.missing} blank</p>
@@ -527,7 +631,7 @@ function createSampleWorkbook() {
   };
 }
 
-function fromLaravelWorkbook(source) {
+function fromSavedWorkbook(source) {
   const rows = hydrateRows(source.rows || []);
   const columns = inferColumns(rows);
   return {
@@ -553,18 +657,21 @@ function fromLaravelWorkbook(source) {
 
 function hydrateDraft() {
   if (payload.initialWorkbook) {
-    setStatus('Loaded from MySQL');
+    setStatus('Loaded saved workbook');
     return;
   }
 
   try {
-    const draft = JSON.parse(localStorage.getItem(localDraftKey) || 'null');
+    const draft = JSON.parse(localStorage.getItem(localDraftKey) || localStorage.getItem(legacyDraftKey) || 'null');
     if (draft?.rows?.length) {
       workbook = { ...draft, columns: inferColumns(draft.rows) };
       setStatus('Local draft restored');
+      localStorage.setItem(localDraftKey, JSON.stringify(workbook));
+      localStorage.removeItem(legacyDraftKey);
     }
   } catch {
     localStorage.removeItem(localDraftKey);
+    localStorage.removeItem(legacyDraftKey);
   }
 }
 
@@ -810,7 +917,7 @@ function createRowId() {
 
 function statusLine(label, value) {
   return `
-    <div class="flex items-center justify-between gap-3 rounded-md bg-muted/55 px-3 py-2">
+    <div class="motion-card flex items-center justify-between gap-3 rounded-md bg-muted/55 px-3 py-2">
       <span class="font-semibold text-muted-foreground">${escapeHtml(label)}</span>
       <span class="truncate text-right font-bold">${escapeHtml(value)}</span>
     </div>
@@ -819,7 +926,7 @@ function statusLine(label, value) {
 
 function statusTile(label, value) {
   return `
-    <div class="rounded-md border bg-muted/35 p-4">
+    <div class="motion-card reveal-on-scroll rounded-md border bg-muted/35 p-4">
       <p class="text-xs font-bold uppercase text-muted-foreground">${escapeHtml(label)}</p>
       <p class="mt-2 truncate text-sm font-extrabold text-foreground">${escapeHtml(value)}</p>
     </div>

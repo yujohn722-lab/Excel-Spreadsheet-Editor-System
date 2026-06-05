@@ -8,6 +8,7 @@
 /storage/framework/sessions/*
 /storage/framework/testing/*
 /storage/framework/views/*
+/storage/app/private/workbooks/*
 /bootstrap/cache/*
 !/bootstrap/cache/.gitkeep
 !/storage/app/.gitkeep

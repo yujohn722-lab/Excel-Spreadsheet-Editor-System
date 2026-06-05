@@ -10,6 +10,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body>
+        <div id="page-progress" class="page-progress"></div>
         <div class="min-h-screen bg-background">
             <header class="sticky top-0 z-40 border-b bg-card/95 shadow-soft backdrop-blur">
                 <div class="flex h-[70px] items-center justify-between gap-4 px-4 sm:px-8">
@@ -22,20 +23,20 @@
                     </div>
 
                     <nav class="hidden items-center gap-8 text-sm font-bold text-foreground lg:flex">
-                        <a href="#dashboard" class="transition-colors hover:text-primary">Dashboard</a>
-                        <a href="#spreadsheet" class="transition-colors hover:text-primary">Spreadsheet</a>
-                        <a href="#sync" class="transition-colors hover:text-primary">Sync</a>
-                        <a href="#database" class="transition-colors hover:text-primary">Database</a>
+                        <a href="#dashboard" class="traverse-link transition-colors hover:text-primary">Dashboard</a>
+                        <a href="#spreadsheet" class="traverse-link transition-colors hover:text-primary">Spreadsheet</a>
+                        <a href="#sync" class="traverse-link transition-colors hover:text-primary">Sync</a>
+                        <a href="#database" class="traverse-link transition-colors hover:text-primary">Records</a>
                     </nav>
 
                     <div class="flex items-center gap-2">
                         <button id="theme-toggle" class="inline-flex h-10 w-10 items-center justify-center rounded-md text-sm font-semibold transition-colors hover:bg-accent" type="button" title="Toggle dark mode">DM</button>
-                        <a href="#upload" class="hidden h-10 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 sm:inline-flex">New Workbook</a>
+                        <a href="#upload" class="traverse-link hidden h-10 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 sm:inline-flex">New Workbook</a>
                     </div>
                 </div>
             </header>
 
-            <section class="adzu-hero relative overflow-hidden">
+            <section class="adzu-hero reveal-on-scroll relative overflow-hidden">
                 <div class="absolute inset-y-0 right-0 hidden w-1/2 opacity-35 md:block">
                     <div class="adzu-paper h-full w-full"></div>
                 </div>
@@ -43,36 +44,36 @@
                     <div class="max-w-4xl text-white">
                         <div class="mb-5 inline-flex items-center rounded-full border border-white/45 bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur">Excel Dashboard Builder</div>
                         <h1 class="max-w-5xl text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">Excel Dashboard Builder Information System</h1>
-                        <p class="mt-5 max-w-3xl text-base font-medium leading-7 text-white/90 sm:text-lg">Upload operational spreadsheets, refine live data, and publish institution-grade dashboard views from one Laravel Blade workspace.</p>
+                        <p class="mt-5 max-w-3xl text-base font-medium leading-7 text-white/90 sm:text-lg">Upload operational spreadsheets, refine live data, and publish institution-grade dashboard views from one secure workspace.</p>
                     </div>
                 </div>
             </section>
 
             <main class="mx-auto max-w-[1440px] px-4 py-7 sm:px-8 lg:px-10">
-                <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                    <a href="#upload" class="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Workbook Intake</a>
-                    <a href="#dashboard" class="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Dashboard View</a>
-                    <a href="#spreadsheet" class="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Spreadsheet Editor</a>
-                    <a href="#sync" class="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Excel Sync</a>
+                <div class="reveal-on-scroll grid grid-cols-2 gap-3 lg:grid-cols-4" style="--reveal-delay: 80ms">
+                    <a href="#upload" class="traverse-link inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Workbook Intake</a>
+                    <a href="#dashboard" class="traverse-link inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Dashboard View</a>
+                    <a href="#spreadsheet" class="traverse-link inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Spreadsheet Editor</a>
+                    <a href="#sync" class="traverse-link inline-flex h-11 items-center justify-center gap-2 rounded-full bg-adzu-gray px-5 text-sm font-semibold text-adzu-ink transition-colors hover:bg-adzu-gray/80">Excel Sync</a>
                 </div>
 
                 <div class="mt-7 flex items-start gap-6">
                     <aside class="hidden w-[232px] shrink-0 lg:block">
-                        <div class="sticky top-[92px] overflow-hidden rounded-lg border bg-card shadow-panel">
+                        <div class="motion-card reveal-on-scroll sticky top-[92px] overflow-hidden rounded-lg border bg-card shadow-panel" style="--reveal-delay: 120ms">
                             <div class="bg-adzu-blue px-5 py-4 text-white">
                                 <p class="text-xs font-semibold uppercase opacity-80">Navigation</p>
                                 <h2 class="mt-1 text-xl font-bold">QASMO Studio</h2>
                             </div>
                             <nav class="space-y-1 p-3">
-                                <a href="#dashboard" class="flex items-center gap-3 rounded-md bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft">Builder</a>
-                                <a href="#upload" class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Workbook</a>
-                                <a href="#spreadsheet" class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Spreadsheet</a>
-                                <a href="#customize" class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Customize</a>
-                                <a href="#database" class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Database</a>
+                                <a href="#dashboard" class="traverse-link flex items-center gap-3 rounded-md bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft">Builder</a>
+                                <a href="#upload" class="traverse-link flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Workbook</a>
+                                <a href="#spreadsheet" class="traverse-link flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Spreadsheet</a>
+                                <a href="#customize" class="traverse-link flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Customize</a>
+                                <a href="#database" class="traverse-link flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent">Records</a>
                             </nav>
                             <div class="border-t bg-muted/45 p-4">
-                                <p class="text-xs font-semibold uppercase text-adzu-blue dark:text-blue-300">Stack</p>
-                                <p class="mt-1 text-sm text-muted-foreground">Laravel Blade, MySQL, JavaScript, Tailwind.</p>
+                                <p class="text-xs font-semibold uppercase text-adzu-blue dark:text-blue-300">Workspace</p>
+                                <p class="mt-1 text-sm text-muted-foreground">Stored workbook data stays editable and export-ready.</p>
                             </div>
                         </div>
                     </aside>
@@ -80,7 +81,7 @@
                     <div class="min-w-0 flex-1 space-y-6">
                         <section id="dashboard" class="grid gap-6 xl:grid-cols-[1fr_330px]">
                             <div class="space-y-6">
-                                <div id="upload" class="rounded-lg border border-dashed bg-card p-5 shadow-panel transition-colors">
+                                <div id="upload" class="motion-card reveal-on-scroll rounded-lg border border-dashed bg-card p-5 shadow-panel transition-colors" style="--reveal-delay: 140ms">
                                     <input id="excel-input" class="sr-only" type="file" accept=".xlsx,.xls">
                                     <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                                         <div class="flex items-start gap-4">
@@ -98,7 +99,7 @@
                                     </div>
                                 </div>
 
-                                <div class="rounded-lg border bg-card p-4 shadow-panel">
+                                <div class="motion-card reveal-on-scroll rounded-lg border bg-card p-4 shadow-panel" style="--reveal-delay: 180ms">
                                     <div class="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_auto]">
                                         <div class="space-y-2">
                                             <label for="search-input" class="text-sm font-semibold">Search</label>
@@ -119,10 +120,10 @@
                                 </div>
                             </div>
 
-                            <div id="database" class="rounded-lg border bg-card p-5 shadow-panel">
+                            <div id="database" class="motion-card reveal-on-scroll rounded-lg border bg-card p-5 shadow-panel" style="--reveal-delay: 220ms">
                                 <div class="flex items-center gap-2">
                                     <div class="h-5 w-5 rounded bg-primary"></div>
-                                    <h2 class="text-xl font-extrabold text-adzu-blue dark:text-blue-300">Database Record</h2>
+                                    <h2 class="text-xl font-extrabold text-adzu-blue dark:text-blue-300">Saved Workbook Record</h2>
                                 </div>
                                 <div id="database-status" class="mt-4 space-y-3 text-sm"></div>
                                 <button id="save-workbook" class="mt-5 inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90" type="button">Save Workbook</button>
@@ -135,7 +136,7 @@
                         <section id="kpi-grid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
 
                         <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_330px]">
-                            <div class="rounded-lg border bg-card shadow-panel">
+                            <div class="motion-card reveal-on-scroll rounded-lg border bg-card shadow-panel">
                                 <div class="border-b p-5">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <h2 id="chart-title" class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Dashboard Overview</h2>
@@ -148,7 +149,7 @@
                                 </div>
                             </div>
 
-                            <div id="customize" class="rounded-lg border bg-card shadow-panel">
+                            <div id="customize" class="motion-card reveal-on-scroll rounded-lg border bg-card shadow-panel" style="--reveal-delay: 80ms">
                                 <div class="border-b p-5">
                                     <h2 class="text-xl font-extrabold text-adzu-blue dark:text-blue-300">Dashboard Controls</h2>
                                     <p class="mt-2 text-sm text-muted-foreground">Configuration is stored with the workbook record.</p>
@@ -186,7 +187,7 @@
                             </div>
                         </section>
 
-                        <section id="spreadsheet" class="rounded-lg border bg-card shadow-panel">
+                        <section id="spreadsheet" class="motion-card reveal-on-scroll rounded-lg border bg-card shadow-panel">
                             <div class="flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h2 class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Editable Workbook Table</h2>
@@ -203,14 +204,14 @@
                         </section>
 
                         <section id="sync" class="grid gap-5 lg:grid-cols-[1fr_330px]">
-                            <div class="rounded-lg border bg-card p-6 shadow-panel">
+                            <div class="motion-card reveal-on-scroll rounded-lg border bg-card p-6 shadow-panel">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h2 class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Excel Sync Center</h2>
                                     <span id="sync-mode-badge" class="inline-flex rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">manual_upload</span>
                                 </div>
                                 <div id="sync-tiles" class="mt-5 grid gap-3 sm:grid-cols-3"></div>
                             </div>
-                            <div class="rounded-lg border bg-card p-6 shadow-panel">
+                            <div class="motion-card reveal-on-scroll rounded-lg border bg-card p-6 shadow-panel" style="--reveal-delay: 80ms">
                                 <h2 class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Cloud Connector</h2>
                                 <div class="mt-5 space-y-3">
                                     <div class="rounded-full bg-muted px-5 py-3 text-center text-sm font-extrabold leading-tight text-muted-foreground">OneDrive / SharePoint</div>
@@ -221,14 +222,14 @@
                         </section>
 
                         <section class="grid gap-5 lg:grid-cols-[1fr_330px]">
-                            <div class="rounded-lg border bg-card p-6 shadow-panel">
+                            <div class="motion-card reveal-on-scroll rounded-lg border bg-card p-6 shadow-panel">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h2 class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Workbook Quality Profile</h2>
                                     <span class="inline-flex rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">Auto-generated</span>
                                 </div>
                                 <div id="quality-profile" class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3"></div>
                             </div>
-                            <div class="rounded-lg border bg-card p-6 shadow-panel">
+                            <div class="motion-card reveal-on-scroll rounded-lg border bg-card p-6 shadow-panel" style="--reveal-delay: 80ms">
                                 <h2 class="text-2xl font-extrabold text-adzu-blue dark:text-blue-300">Programs and Services</h2>
                                 <div class="mt-5 space-y-3">
                                     <div class="rounded-full bg-primary px-5 py-3 text-center text-sm font-extrabold leading-tight text-primary-foreground shadow-soft">Institutional Strategic Management</div>
@@ -244,8 +245,8 @@
             <footer class="mt-10">
                 <div class="border-y bg-muted px-4 py-3 text-center text-sm font-semibold text-muted-foreground">qasmo@adzu.edu.ph | 991-0871 loc. 2100 | Room 207, Fr Carretero SJ Building</div>
                 <div class="bg-adzu-blue px-4 py-8 text-center text-sm text-white">
-                    <p class="font-semibold">Ateneo de Zamboanga University | Laravel Blade Excel Dashboard Builder</p>
-                    <p class="mt-2 text-white/75">Laravel, Blade, MySQL, JavaScript, Tailwind CSS, Chart.js, and PhpSpreadsheet.</p>
+                    <p class="font-semibold">Ateneo de Zamboanga University | Excel Dashboard Builder</p>
+                    <p class="mt-2 text-white/75">A secure workspace for workbook editing, dashboard review, and updated Excel exports.</p>
                 </div>
             </footer>
         </div>

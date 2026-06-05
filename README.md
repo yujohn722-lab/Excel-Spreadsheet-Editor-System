@@ -1,58 +1,55 @@
-# Laravel Blade Excel Dashboard Builder
+# Excel Dashboard Builder
 
-A Laravel + Blade dashboard builder inspired by the attached AdZU/QASMO reference design. The app accepts Excel workbooks, infers KPIs and charts, supports spreadsheet-like editing, and stores workbook snapshots in MySQL through Eloquent.
+A workbook dashboard system inspired by the AdZU/QASMO reference design. It accepts Excel files, builds KPI cards and charts automatically, supports spreadsheet-style editing, and exports an updated workbook with a styled table.
 
-## Stack
+## What It Can Do
 
-- Laravel
-- Blade
-- MySQL
-- JavaScript
-- Tailwind CSS
-- Chart.js
-- SheetJS for browser-side `.xlsx` and `.xls` parsing
-- PhpSpreadsheet for server-side `.xlsx` generation
+- Upload `.xlsx` and `.xls` workbooks.
+- Generate dashboard summaries from the uploaded data.
+- Edit rows directly in the browser.
+- Add and delete rows.
+- Save workbook changes.
+- Download an updated Excel file with a designed table.
+- Search, filter, customize charts, and switch dark mode.
 
 ## Local Setup
 
-1. Install PHP dependencies:
+1. Install the project dependencies:
 
    ```bash
    composer install
-   ```
-
-2. Install frontend dependencies:
-
-   ```bash
    npm install
    ```
 
-3. Configure the app:
+2. Create the local environment file:
 
    ```bash
    cp .env.example .env
    php artisan key:generate
    ```
 
-   Update the MySQL values in `.env`.
-
-4. Run migrations:
+3. Update the database values in `.env`, then prepare the saved workbook tables:
 
    ```bash
    php artisan migrate
    ```
 
-5. Start Laravel and Vite:
+4. Start the app:
 
    ```bash
    composer run dev
    ```
 
-The UI keeps a local browser draft if the database is unavailable, then saves to MySQL when Laravel and the database are ready.
+5. Open the local app URL shown in the terminal, usually:
 
-## Excel Sync Behavior
+   ```text
+   http://127.0.0.1:8000
+   ```
 
-- Upload or re-upload Excel: the app parses the file in the browser, sends the workbook model to Laravel, and stores the uploaded source file metadata.
-- Save workbook: Laravel saves rows/settings to MySQL and regenerates the server-side `current.xlsx` file.
-- Download updated Excel: use the dashboard button to download the latest regenerated workbook.
-- Live local-file watching is not possible in a browser-only app. The project now has sync metadata and UI space for a future OneDrive, SharePoint, Google Drive, or desktop-helper connector.
+## Workbook Export
+
+Saving a workbook regenerates the downloadable Excel file. The exported file includes a formatted table with a dark blue header, borders, alternating row shading, filters, frozen headers, and readable column widths.
+
+## Sync Notes
+
+The app updates the downloadable Excel file after you save changes. If you edit the original Excel file outside the browser, upload it again so the dashboard can rebuild from the latest version.
