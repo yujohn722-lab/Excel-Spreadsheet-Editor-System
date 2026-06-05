@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 33% 98%;
+    --foreground: 226 66% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 226 66% 13%;
+    --primary: 221 88% 49%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 205 22% 88%;
+    --secondary-foreground: 222 68% 15%;
+    --muted: 211 35% 93%;
+    --muted-foreground: 219 13% 42%;
+    --accent: 218 100% 95%;
+    --accent-foreground: 221 88% 35%;
+    --destructive: 0 80% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 24% 88%;
+    --input: 215 24% 88%;
+    --ring: 221 88% 49%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 39% 8%;
+    --foreground: 213 31% 92%;
+    --card: 224 36% 12%;
+    --card-foreground: 213 31% 92%;
+    --primary: 217 91% 61%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 224 26% 18%;
+    --secondary-foreground: 213 31% 92%;
+    --muted: 224 26% 18%;
+    --muted-foreground: 215 20% 68%;
+    --accent: 222 47% 18%;
+    --accent-foreground: 214 100% 89%;
+    --destructive: 0 63% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 224 26% 22%;
+    --input: 224 26% 22%;
+    --ring: 217 91% 61%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    letter-spacing: 0;
+  }
+}
+
+@layer components {
+  .adzu-hero {
+    background:
+      linear-gradient(90deg, rgba(21, 95, 234, 0.94), rgba(68, 139, 225, 0.76), rgba(239, 246, 255, 0.42)),
+      radial-gradient(circle at 82% 22%, rgba(255, 255, 255, 0.42), transparent 24%),
+      linear-gradient(135deg, #0d3f93 0%, #79b7fb 52%, #eef7ff 100%);
+  }
+
+  .adzu-paper {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.9)),
+      repeating-linear-gradient(135deg, rgba(0, 60, 143, 0.08) 0, rgba(0, 60, 143, 0.08) 1px, transparent 1px, transparent 15px);
+  }
+
+  .dark .adzu-paper {
+    background-image:
+      linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.88)),
+      repeating-linear-gradient(135deg, rgba(96, 165, 250, 0.11) 0, rgba(96, 165, 250, 0.11) 1px, transparent 1px, transparent 15px);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.38) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: hsl(var(--muted-foreground) / 0.32);
+  }
+}
